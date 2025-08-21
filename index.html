@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Linkmanager</title>
+    <title>Mijn Links</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -129,27 +129,15 @@
 
         <ul id="linksList" class="links-list">
             </ul>
-        
-        <input type="hidden" id="linksData" name="linksData" value="">
     </div>
 
     <script>
         const linkInput = document.getElementById('linkInput');
         const addLinkBtn = document.getElementById('addLinkBtn');
         const linksList = document.getElementById('linksList');
-        const linksData = document.getElementById('linksData');
 
         function loadLinks() {
-            let storedLinks = [];
-            // Probeer de links te laden vanuit het verborgen veld
-            try {
-                if (linksData.value) {
-                    storedLinks = JSON.parse(linksData.value);
-                }
-            } catch (e) {
-                // Doe niets als de data corrupt is
-            }
-            
+            const storedLinks = JSON.parse(localStorage.getItem('links')) || [];
             if (storedLinks.length === 0) {
                 linksList.innerHTML = '<p class="no-links">Nog geen links toegevoegd.</p>';
             } else {
@@ -158,7 +146,7 @@
             }
         }
 
-        function addLinkElement(url, saveChanges = true) {
+        function addLinkElement(url, saveToStorage = true) {
             const noLinksMessage = document.querySelector('.no-links');
             if (noLinksMessage) {
                 noLinksMessage.remove();
@@ -166,7 +154,6 @@
 
             const listItem = document.createElement('li');
             listItem.classList.add('link-item');
-            listItem.setAttribute('data-url', url);
 
             const anchor = document.createElement('a');
             anchor.href = url;
@@ -185,34 +172,21 @@
             listItem.appendChild(deleteBtn);
             linksList.appendChild(listItem);
 
-            if (saveChanges) {
+            if (saveToStorage) {
                 saveLink(url);
             }
         }
 
         function saveLink(url) {
-            let storedLinks = [];
-            try {
-                if (linksData.value) {
-                    storedLinks = JSON.parse(linksData.value);
-                }
-            } catch (e) {}
-
+            const storedLinks = JSON.parse(localStorage.getItem('links')) || [];
             storedLinks.push(url);
-            linksData.value = JSON.stringify(storedLinks);
+            localStorage.setItem('links', JSON.stringify(storedLinks));
         }
 
         function removeLink(urlToRemove, listItem) {
-            let storedLinks = [];
-            try {
-                if (linksData.value) {
-                    storedLinks = JSON.parse(linksData.value);
-                }
-            } catch (e) {}
-            
+            let storedLinks = JSON.parse(localStorage.getItem('links')) || [];
             storedLinks = storedLinks.filter(url => url !== urlToRemove);
-            linksData.value = JSON.stringify(storedLinks);
-            
+            localStorage.setItem('links', JSON.stringify(storedLinks));
             listItem.remove();
             if (storedLinks.length === 0) {
                 linksList.innerHTML = '<p class="no-links">Nog geen links toegevoegd.</p>';
