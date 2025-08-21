@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linkmanager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding-top: 20px;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .add-link-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .add-link-form input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .add-link-form button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .add-link-form button:hover {
+            background-color: #0056b3;
+        }
+
+        .links-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .link-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s ease;
+        }
+
+        .link-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .link-item a {
+            flex-grow: 1;
+            color: #007bff;
+            text-decoration: none;
+            font-size: 16px;
+            cursor: pointer;
+            word-wrap: break-word;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .link-item a:hover {
+            text-decoration: underline;
+        }
+
+        .delete-btn {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+
+        .no-links {
+            text-align: center;
+            color: #888;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Mijn Links</h1>
+
+        <div class="add-link-form">
+            <input type="text" id="linkInput" placeholder="Voer hier een URL in..." required>
+            <button id="addLinkBtn">Voeg toe</button>
+        </div>
+
+        <ul id="linksList" class="links-list">
+            </ul>
+        
+        <input type="hidden" id="linksData" name="linksData" value="">
+    </div>
+
+    <script>
+        const linkInput = document.getElementById('linkInput');
+        const addLinkBtn = document.getElementById('addLinkBtn');
+        const linksList = document.getElementById('linksList');
+        const linksData = document.getElementById('linksData');
+
+        function loadLinks() {
+            let storedLinks = [];
+            // Probeer de links te laden vanuit het verborgen veld
+            try {
+                if (linksData.value) {
+                    storedLinks = JSON.parse(linksData.value);
+                }
+            } catch (e) {
+                // Doe niets als de data corrupt is
+            }
+            
+            if (storedLinks.length === 0) {
+                linksList.innerHTML = '<p class="no-links">Nog geen links toegevoegd.</p>';
+            } else {
+                linksList.innerHTML = '';
+                storedLinks.forEach(link => addLinkElement(link, false));
+            }
+        }
+
+        function addLinkElement(url, saveChanges = true) {
+            const noLinksMessage = document.querySelector('.no-links');
+            if (noLinksMessage) {
+                noLinksMessage.remove();
+            }
+
+            const listItem = document.createElement('li');
+            listItem.classList.add('link-item');
+            listItem.setAttribute('data-url', url);
+
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.textContent = url;
+            anchor.target = '_blank';
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.classList.add('delete-btn');
+            deleteBtn.textContent = 'Verwijder';
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation();
+                removeLink(url, listItem);
+            };
+
+            listItem.appendChild(anchor);
+            listItem.appendChild(deleteBtn);
+            linksList.appendChild(listItem);
+
+            if (saveChanges) {
+                saveLink(url);
+            }
+        }
+
+        function saveLink(url) {
+            let storedLinks = [];
+            try {
+                if (linksData.value) {
+                    storedLinks = JSON.parse(linksData.value);
+                }
+            } catch (e) {}
+
+            storedLinks.push(url);
+            linksData.value = JSON.stringify(storedLinks);
+        }
+
+        function removeLink(urlToRemove, listItem) {
+            let storedLinks = [];
+            try {
+                if (linksData.value) {
+                    storedLinks = JSON.parse(linksData.value);
+                }
+            } catch (e) {}
+            
+            storedLinks = storedLinks.filter(url => url !== urlToRemove);
+            linksData.value = JSON.stringify(storedLinks);
+            
+            listItem.remove();
+            if (storedLinks.length === 0) {
+                linksList.innerHTML = '<p class="no-links">Nog geen links toegevoegd.</p>';
+            }
+        }
+
+        addLinkBtn.addEventListener('click', () => {
+            let url = linkInput.value.trim();
+            if (url) {
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    url = 'https://' + url;
+                }
+                addLinkElement(url);
+                linkInput.value = '';
+            }
+        });
+
+        linkInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addLinkBtn.click();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadLinks);
+    </script>
+
+</body>
+</html>
